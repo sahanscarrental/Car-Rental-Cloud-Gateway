@@ -1,0 +1,83 @@
+server:
+  port: 9191
+
+spring:
+  application:
+    name: API-GATEWAY
+
+  cloud:
+    gateway:
+      httpclient:
+        pool:
+          acquire-timeout: 20
+        connect-timeout: 75
+        response-timeout: 150s
+
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+      - id: FILE-SERVICE
+        uri: lb://FILE-SERVICE
+        predicates:
+        - Path=/file-service/**
+        filters:
+        - name: CircuitBreaker
+          arg:
+            name: FILE-SERVICE
+            fallbackuri: forword:/dataServiceFallBack
+
+      - id: USER-SERVICECUSTOMER-VALIDATION-SERVICE
+        uri: lb://CUSTOMER-VALIDATION-SERVICE
+        predicates:
+        - Path=/c-val-service/**
+        filters:
+        - name: CircuitBreaker
+          arg:
+            name: CUSTOMER-VALIDATION-SERVICE
+            fallbackuri: forword:/userServiceFallBack
+
+      - id: BOOKIING-SERVICE
+        uri: lb://BOOKIING-SERVICE
+        predicates:
+        - Path=/booking-service/**
+        filters:
+        - name: CircuitBreaker
+          arg:
+            name: BOOKIING-SERVICE
+            fallbackuri: forword:/fileServiceFallBack
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_SERVER:http://127.0.0.1:8761/eureka/}
+
+  instance:
+    hostname: ${DOMAIN:localhost}
+
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: hystrix.stream
+#
+#
+#
+#hystrix:
+#  command:
+#    default:
+#      execution:
+#        isolation:
+#          thread:
+#            timeoutInMilliseconds: 4000
+
+
+
+
